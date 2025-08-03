@@ -1,0 +1,33 @@
+# Ignore build artifacts
+dist/
+build/
+*.tsbuildinfo
+
+# Ignore source maps
+*.map
+
+# Ignore test files in distribution
+**/*.test.ts
+**/*.spec.ts
+coverage/
+
+# Ignore development files
+tsconfig.json
+jest.config.js
+.eslintrc.js
+
+# Ignore IDE files
+.vscode/
+.idea/
+
+# Ignore logs
+*.log
+npm-debug.log*
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore temporary files
+*.tmp
+*.temp
