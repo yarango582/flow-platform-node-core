@@ -1,5 +1,5 @@
 {
-  "name": "@flow-platform/node-core",
+  "name": "flow-platform-node-core",
   "version": "1.0.0",
   "description": "Core library for Flow Platform - Execution engine for data processing workflows",
   "main": "dist/index.js",

@@ -1,8 +1,8 @@
-# @flow-platform/node-core
+# flow-platform-node-core
 
 🚀 **Core library for Flow Platform** - A powerful TypeScript library for building distributed data processing workflows with type safety and microservices architecture.
 
-[![npm version](https://badge.fury.io/js/@flow-platform%2Fnode-core.svg)](https://badge.fury.io/js/@flow-platform%2Fnode-core)
+[![npm version](https://badge.fury.io/js/flow-platform-node-core.svg)](https://badge.fury.io/js/flow-platform-node-core)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.4+-blue.svg)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
@@ -22,13 +22,13 @@
 
 ```bash
 # Using npm
-npm install @flow-platform/node-core
+npm install flow-platform-node-core
 
 # Using yarn
-yarn add @flow-platform/node-core
+yarn add flow-platform-node-core
 
 # Using pnpm
-pnpm add @flow-platform/node-core
+pnpm add flow-platform-node-core
 ```
 
 ## 🚀 Quick Start
