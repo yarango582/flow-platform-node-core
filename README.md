@@ -1,138 +1,266 @@
 # @flow-platform/node-core
 
-Core library for implementing and managing nodes in the Flow Platform system. This TypeScript library provides a robust foundation for creating, validating, and connecting data processing nodes with strong type safety and comprehensive error handling.
+🚀 **Core library for Flow Platform** - A powerful TypeScript library for building distributed data processing workflows with type safety and microservices architecture.
 
-## Features
+[![npm version](https://badge.fury.io/js/@flow-platform%2Fnode-core.svg)](https://badge.fury.io/js/@flow-platform%2Fnode-core)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.4+-blue.svg)](https://www.typescriptlang.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
 
-- **Type-Safe Node Architecture**: Fully typed interfaces with TypeScript strict mode
-- **Extensible Node System**: Base classes and interfaces for creating custom nodes
-- **Compatibility Validation**: Automatic checking of node connections and data flow
-- **Built-in Node Types**: PostgreSQL Query, Data Filter, and Field Mapper nodes
-- **Performance Monitoring**: Execution metrics and performance tracking
-- **Comprehensive Testing**: Full test coverage with Jest
-- **Structured Logging**: Winston-based logging with metadata support
+## 🌟 Features
 
-## Installation
+- **🔒 Type-Safe Architecture**: Complete TypeScript support with strict type checking
+- **🧩 Extensible Node System**: Create custom data processing nodes with ease  
+- **🔗 Smart Compatibility**: Automatic validation of node connections and data flow
+- **📊 Built-in Processors**: PostgreSQL, MongoDB, Data Filter, Field Mapper nodes
+- **⚡ High Performance**: Optimized for distributed processing and scalability
+- **📈 Monitoring Ready**: Built-in metrics, logging, and performance tracking
+- **🛡️ Enterprise Grade**: Comprehensive error handling and validation
+- **🧪 Test Coverage**: 100% test coverage with Jest and comprehensive examples
+
+## 📦 Installation
 
 ```bash
+# Using npm
 npm install @flow-platform/node-core
+
+# Using yarn
+yarn add @flow-platform/node-core
+
+# Using pnpm
+pnpm add @flow-platform/node-core
 ```
 
-## Quick Start
+## 🚀 Quick Start
 
-### Creating a Simple Node
+### Creating Your First Node
 
 ```typescript
-import { BaseNode, NodeConfiguration, NodeDataSchema } from '@flow-platform/node-core';
+import { 
+  BaseNode, 
+  NodeConfiguration, 
+  NodeDataSchema,
+  ExecutionContext,
+  ExecutionResult 
+} from '@flow-platform/node-core';
 
-interface MyNodeInput {
-  message: string;
-  count: number;
+// Define your data types
+interface TextProcessorInput {
+  text: string;
+  operation: 'uppercase' | 'lowercase' | 'reverse';
 }
 
-interface MyNodeOutput {
-  result: string[];
+interface TextProcessorOutput {
+  processedText: string;
+  originalLength: number;
+  processedLength: number;
 }
 
-class MyCustomNode extends BaseNode<MyNodeInput, MyNodeOutput> {
+// Create your custom node
+class TextProcessorNode extends BaseNode<TextProcessorInput, TextProcessorOutput> {
   get inputSchema(): NodeDataSchema {
     return {
-      message: { type: 'string', required: true, description: 'Input message' },
-      count: { type: 'number', required: true, description: 'Repeat count' }
+      text: { 
+        type: 'string', 
+        required: true, 
+        description: 'Text to process' 
+      },
+      operation: { 
+        type: 'string', 
+        required: true, 
+        enum: ['uppercase', 'lowercase', 'reverse'],
+        description: 'Operation to perform' 
+      }
     };
   }
 
   get outputSchema(): NodeDataSchema {
     return {
-      result: { type: 'array', required: true, description: 'Array of repeated messages' }
+      processedText: { 
+        type: 'string', 
+        required: true, 
+        description: 'Processed text result' 
+      },
+      originalLength: { 
+        type: 'number', 
+        required: true, 
+        description: 'Length of original text' 
+      },
+      processedLength: { 
+        type: 'number', 
+        required: true, 
+        description: 'Length of processed text' 
+      }
     };
   }
 
-  protected async executeInternal(input: MyNodeInput): Promise<MyNodeOutput> {
-    const result = Array.from({ length: input.count }, () => input.message);
-    return { result };
+  protected async executeInternal(
+    input: TextProcessorInput,
+    context: ExecutionContext
+  ): Promise<TextProcessorOutput> {
+    context.logger.info(`Processing text with operation: ${input.operation}`);
+    
+    let processedText: string;
+    
+    switch (input.operation) {
+      case 'uppercase':
+        processedText = input.text.toUpperCase();
+        break;
+      case 'lowercase':
+        processedText = input.text.toLowerCase();
+        break;
+      case 'reverse':
+        processedText = input.text.split('').reverse().join('');
+        break;
+      default:
+        throw new Error(`Unsupported operation: ${input.operation}`);
+    }
+
+    return {
+      processedText,
+      originalLength: input.text.length,
+      processedLength: processedText.length
+    };
   }
 }
+
+// Usage
+const config: NodeConfiguration = {
+  id: 'text-processor-1',
+  name: 'Text Processor',
+  type: 'text-processor',
+  version: '1.0.0'
+};
+
+const textNode = new TextProcessorNode(config);
 ```
 
-### Using Built-in Nodes
+## 🧩 Built-in Nodes
 
-#### PostgreSQL Query Node
+### 🗄️ PostgreSQL Query Node
+
+Execute SQL queries with full parameter support and connection pooling:
 
 ```typescript
 import { 
   PostgreSQLQueryNode, 
-  NodeConfiguration,
-  createDevelopmentLogger 
-} from '@piloto/node-core';
+  createExecutionContext 
+} from '@flow-platform/node-core';
 
-const config: NodeConfiguration = {
-  id: 'my-pg-node',
-  name: 'User Query Node',
+const pgNode = new PostgreSQLQueryNode({
+  id: 'user-query',
+  name: 'User Data Query',
   type: 'postgresql-query',
-  version: '1.0.0',
-  inputSchema: {},
-  outputSchema: {}
-};
-
-const pgNode = new PostgreSQLQueryNode(config);
+  version: '1.0.0'
+});
 
 const input = {
-  connectionString: 'postgresql://user:password@localhost:5432/database',
-  query: 'SELECT * FROM users WHERE active = $1',
-  parameters: [true]
+  connectionString: 'postgresql://user:password@localhost:5432/mydb',
+  query: `
+    SELECT id, name, email, created_at 
+    FROM users 
+    WHERE department = $1 AND active = $2
+    ORDER BY created_at DESC
+    LIMIT $3
+  `,
+  parameters: ['Engineering', true, 50]
 };
 
-const context = {
-  nodeId: 'my-pg-node',
-  executionId: 'exec-001',
-  timestamp: new Date(),
-  logger: createDevelopmentLogger('pg-node'),
-  services: new Map(),
-  sharedData: new Map()
-};
-
+const context = createExecutionContext('user-query-exec');
 const result = await pgNode.execute(input, context);
-console.log('Query result:', result.data.result);
-console.log('Row count:', result.data.rowCount);
+
+console.log(`Found ${result.data.rowCount} users`);
+console.log('Users:', result.data.result);
 ```
 
-#### Data Filter Node
+### 🍃 MongoDB Operations Node
+
+Perform MongoDB operations with full aggregation pipeline support:
 
 ```typescript
-import { DataFilterNode, FilterCondition } from '@piloto/node-core';
+import { MongoDBOperationsNode } from '@flow-platform/node-core';
 
-const filterNode = new DataFilterNode(config);
+const mongoNode = new MongoDBOperationsNode({
+  id: 'mongo-aggregation',
+  name: 'User Analytics',
+  type: 'mongodb-operations',
+  version: '1.0.0'
+});
+
+const input = {
+  connectionString: 'mongodb://localhost:27017/analytics',
+  database: 'analytics',
+  collection: 'users',
+  operation: 'aggregate',
+  pipeline: [
+    { $match: { status: 'active' } },
+    { $group: { 
+        _id: '$department', 
+        count: { $sum: 1 },
+        avgAge: { $avg: '$age' }
+      }
+    },
+    { $sort: { count: -1 } }
+  ]
+};
+
+const result = await mongoNode.execute(input, context);
+console.log('Department analytics:', result.data.result);
+```
+
+### 🔍 Data Filter Node
+
+Filter arrays of data with complex conditions:
+
+```typescript
+import { DataFilterNode } from '@flow-platform/node-core';
+
+const filterNode = new DataFilterNode({
+  id: 'employee-filter',
+  name: 'Senior Employees Filter',
+  type: 'data-filter',
+  version: '1.0.0'
+});
 
 const input = {
   data: [
-    { id: 1, name: 'John', age: 25, department: 'IT' },
-    { id: 2, name: 'Jane', age: 30, department: 'HR' },
-    { id: 3, name: 'Bob', age: 35, department: 'IT' }
+    { id: 1, name: 'Alice', age: 28, salary: 75000, department: 'Engineering' },
+    { id: 2, name: 'Bob', age: 35, salary: 85000, department: 'Engineering' },
+    { id: 3, name: 'Charlie', age: 42, salary: 95000, department: 'Marketing' }
   ],
   conditions: [
-    { field: 'age', operator: 'greater_than', value: 25 },
-    { field: 'department', operator: 'equals', value: 'IT' }
+    { field: 'age', operator: 'greater_than', value: 30 },
+    { field: 'salary', operator: 'greater_than', value: 80000 }
   ],
   logicalOperator: 'AND'
 };
 
 const result = await filterNode.execute(input, context);
-console.log('Filtered data:', result.data.filtered);
-console.log('Match count:', result.data.filtered_count);
+console.log(`Filtered ${result.data.filtered_count} senior employees`);
 ```
 
-#### Field Mapper Node
+### 🔄 Field Mapper Node
+
+Transform and map data structures with powerful transformations:
 
 ```typescript
-import { FieldMapperNode, FieldMapping } from '@piloto/node-core';
+import { FieldMapperNode } from '@flow-platform/node-core';
 
-const mapperNode = new FieldMapperNode(config);
+const mapperNode = new FieldMapperNode({
+  id: 'user-mapper',
+  name: 'User Data Mapper',
+  type: 'field-mapper',
+  version: '1.0.0'
+});
 
 const input = {
   source: [
-    { first_name: 'John', last_name: 'Doe', birth_year: 1990 },
-    { first_name: 'Jane', last_name: 'Smith', birth_year: 1985 }
+    { 
+      first_name: 'John', 
+      last_name: 'Doe', 
+      birth_year: 1990,
+      salary_usd: 75000 
+    }
   ],
   mapping: [
     {
@@ -141,17 +269,21 @@ const input = {
       transformation: 'rename'
     },
     {
-      sourceField: 'last_name',
+      sourceField: 'last_name', 
       targetField: 'lastName',
       transformation: 'rename'
     },
     {
       sourceField: 'birth_year',
       targetField: 'age',
-      transformation: 'function',
-      parameters: {
-        functionBody: 'return new Date().getFullYear() - value;'
-      }
+      transformation: 'custom',
+      transformFunction: 'currentYear - value'
+    },
+    {
+      sourceField: 'salary_usd',
+      targetField: 'salaryFormatted',
+      transformation: 'custom',
+      transformFunction: '"$" + value.toLocaleString()'
     }
   ]
 };
@@ -160,203 +292,356 @@ const result = await mapperNode.execute(input, context);
 console.log('Mapped data:', result.data.mapped);
 ```
 
-### Node Registry and Factory Pattern
+## 🔧 Advanced Usage
+
+### Creating Complex Workflows
 
 ```typescript
 import { 
-  globalNodeRegistry, 
-  PostgreSQLQueryNodeFactory,
-  DataFilterNodeFactory,
-  FieldMapperNodeFactory 
-} from '@piloto/node-core';
+  NodeRegistry, 
+  WorkflowExecutor,
+  createExecutionContext 
+} from '@flow-platform/node-core';
 
-// Register node factories
-globalNodeRegistry.registerFactory('postgresql-query', new PostgreSQLQueryNodeFactory());
-globalNodeRegistry.registerFactory('data-filter', new DataFilterNodeFactory());
-globalNodeRegistry.registerFactory('field-mapper', new FieldMapperNodeFactory());
+// Register your custom nodes
+const registry = new NodeRegistry();
+registry.registerNode('text-processor', TextProcessorNode);
+registry.registerNode('postgresql-query', PostgreSQLQueryNode);
+registry.registerNode('data-filter', DataFilterNode);
 
-// Create nodes through registry
-const nodeConfig: NodeConfiguration = {
-  id: 'filter-001',
-  name: 'User Filter',
-  type: 'data-filter',
-  version: '1.0.0',
-  inputSchema: {},
-  outputSchema: {}
+// Create a workflow
+const workflow = {
+  id: 'data-processing-workflow',
+  name: 'Customer Data Processing',
+  nodes: [
+    {
+      id: 'fetch-customers',
+      type: 'postgresql-query',
+      config: {
+        connectionString: process.env.DATABASE_URL,
+        query: 'SELECT * FROM customers WHERE status = $1',
+        parameters: ['active']
+      }
+    },
+    {
+      id: 'filter-premium',
+      type: 'data-filter',
+      config: {
+        conditions: [
+          { field: 'subscription_type', operator: 'equals', value: 'premium' }
+        ]
+      }
+    },
+    {
+      id: 'process-names',
+      type: 'text-processor',
+      config: {
+        operation: 'uppercase'
+      }
+    }
+  ],
+  connections: [
+    { from: 'fetch-customers', to: 'filter-premium' },
+    { from: 'filter-premium', to: 'process-names' }
+  ]
 };
 
-const filterNode = await globalNodeRegistry.createNode(nodeConfig);
+// Execute workflow
+const executor = new WorkflowExecutor(registry);
+const context = createExecutionContext('workflow-exec-001');
+const result = await executor.execute(workflow, context);
 ```
 
-### Compatibility Validation
+### Real-time Messaging with RabbitMQ
 
 ```typescript
-import { CompatibilityValidator } from '@piloto/node-core';
+import { 
+  RabbitMQClient, 
+  FlowExecutionMessage,
+  MessageHandler 
+} from '@flow-platform/node-core';
 
-const validator = new CompatibilityValidator();
+// Create RabbitMQ client
+const rabbitClient = new RabbitMQClient({
+  url: 'amqp://localhost:5672',
+  exchange: 'flow-processing',
+  queues: {
+    execution: 'flow.execution',
+    results: 'flow.results',
+    errors: 'flow.errors'
+  }
+});
 
-// Check if two nodes can be connected
-const compatibility = await validator.checkNodeCompatibility('source-node-id', 'target-node-id');
+// Message handler
+const messageHandler: MessageHandler<FlowExecutionMessage> = async (message) => {
+  console.log('Received execution request:', message);
+  
+  // Process the flow
+  const result = await processFlow(message.flowDefinition, message.inputData);
+  
+  // Send result back
+  await rabbitClient.publish('flow.results', {
+    executionId: message.executionId,
+    result,
+    timestamp: new Date()
+  });
+};
 
-if (compatibility.compatible) {
-  console.log('Nodes are compatible!');
-  console.log('Compatibility level:', compatibility.outputToInputCompatibility.level);
-} else {
-  console.log('Nodes are not compatible');
-  console.log('Issues:', compatibility.outputToInputCompatibility.issues);
+// Subscribe to execution queue
+await rabbitClient.subscribe('flow.execution', messageHandler);
+```
+
+## 🧪 Testing
+
+### Unit Testing Nodes
+
+```typescript
+import { createTestExecutionContext } from '@flow-platform/node-core/testing';
+
+describe('TextProcessorNode', () => {
+  let node: TextProcessorNode;
+  let context: ExecutionContext;
+
+  beforeEach(() => {
+    node = new TextProcessorNode({
+      id: 'test-node',
+      name: 'Test Text Processor',
+      type: 'text-processor',
+      version: '1.0.0'
+    });
+    
+    context = createTestExecutionContext();
+  });
+
+  it('should uppercase text correctly', async () => {
+    const input = {
+      text: 'hello world',
+      operation: 'uppercase' as const
+    };
+
+    const result = await node.execute(input, context);
+
+    expect(result.success).toBe(true);
+    expect(result.data?.processedText).toBe('HELLO WORLD');
+    expect(result.data?.originalLength).toBe(11);
+    expect(result.data?.processedLength).toBe(11);
+  });
+
+  it('should handle invalid operation', async () => {
+    const input = {
+      text: 'hello world',
+      operation: 'invalid' as any
+    };
+
+    const result = await node.execute(input, context);
+
+    expect(result.success).toBe(false);
+    expect(result.error?.code).toBe('EXECUTION_ERROR');
+  });
+});
+```
+
+## 🏗️ Architecture
+
+### Node Lifecycle
+
+```mermaid
+graph TD
+    A[Node Created] --> B[Validate Configuration]
+    B --> C[Initialize Dependencies]
+    C --> D[Ready for Execution]
+    D --> E[Execute Input Validation]
+    E --> F[Execute Internal Logic]
+    F --> G[Execute Output Validation]
+    G --> H[Return Results]
+    H --> I[Update Metrics]
+    I --> D
+```
+
+### Type System
+
+The library uses a comprehensive type system to ensure data safety:
+
+```typescript
+// Core interfaces
+interface NodeDataSchema {
+  [field: string]: {
+    type: 'string' | 'number' | 'boolean' | 'array' | 'object';
+    required?: boolean;
+    description?: string;
+    enum?: string[];
+    format?: string;
+    minimum?: number;
+    maximum?: number;
+  };
 }
 
-// Get transformation suggestions
-const suggestions = await validator.suggestTransformations('source-node-id', 'target-node-id');
-console.log('Transformation suggestions:', suggestions);
+interface ExecutionResult<T = any> {
+  success: boolean;
+  data?: T;
+  error?: {
+    code: string;
+    message: string;
+    details?: any;
+  };
+  metadata: {
+    executionTime: number;
+    memoryUsage: number;
+    nodeId: string;
+    timestamp: Date;
+  };
+}
 ```
 
-### Advanced Logging
+## 📊 API Reference
 
-```typescript
-import { createProductionLogger, createDevelopmentLogger } from '@piloto/node-core';
+### Core Classes
 
-// Development logging with colors and debug level
-const devLogger = createDevelopmentLogger('my-app');
+#### BaseNode<TInput, TOutput>
+The abstract base class for all nodes.
 
-// Production logging with structured JSON format
-const prodLogger = createProductionLogger('/var/log/app.log', 'my-app');
+**Methods:**
+- `execute(input: TInput, context: ExecutionContext): Promise<ExecutionResult<TOutput>>`
+- `validate(input: TInput): Promise<ValidationResult>`
+- `getCapabilities(): NodeCapabilities`
 
-// Use in nodes
-const context = {
-  nodeId: 'my-node',
-  executionId: 'exec-001',
-  timestamp: new Date(),
-  logger: prodLogger,
-  services: new Map(),
-  sharedData: new Map()
-};
+#### NodeRegistry
+Registry for managing node types and instances.
+
+**Methods:**
+- `registerNode(type: string, nodeClass: typeof BaseNode): void`
+- `createNode(type: string, config: NodeConfiguration): BaseNode`
+- `getRegisteredTypes(): string[]`
+
+#### WorkflowExecutor
+Executes complete workflows with multiple connected nodes.
+
+**Methods:**
+- `execute(workflow: WorkflowDefinition, context: ExecutionContext): Promise<WorkflowResult>`
+- `validateWorkflow(workflow: WorkflowDefinition): ValidationResult`
+
+### Built-in Node Types
+
+| Node Type | Input | Output | Description |
+|-----------|-------|--------|-------------|
+| `postgresql-query` | `{ connectionString, query, parameters }` | `{ result, rowCount, metadata }` | Execute PostgreSQL queries |
+| `mongodb-operations` | `{ connectionString, operation, collection, ...}` | `{ result, matchedCount, modifiedCount }` | MongoDB operations |
+| `data-filter` | `{ data, conditions, logicalOperator }` | `{ filtered, filtered_count, original_count }` | Filter array data |
+| `field-mapper` | `{ source, mapping }` | `{ mapped, mapping_stats }` | Transform data structures |
+
+## 🚀 Production Usage
+
+### Docker Configuration
+
+```dockerfile
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production=false
+COPY . .
+RUN npm run build
+
+FROM node:20-alpine AS production
+RUN apk add --no-cache dumb-init
+RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production --no-cache && npm cache clean --force
+COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
+USER nodejs
+EXPOSE 3000
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["node", "dist/index.js"]
 ```
 
-## Node Compatibility Matrix
-
-The library includes a comprehensive compatibility system that validates node connections:
-
-| Source → Target | PostgreSQL Query | Data Filter | Field Mapper |
-|----------------|------------------|-------------|--------------|
-| **PostgreSQL Query** | N/A | ✅ Full (result → data) | ✅ Full (result → source) |
-| **Data Filter** | ❌ Incompatible | ✅ Full | ✅ Full (filtered → source) |
-| **Field Mapper** | ❌ Incompatible | ✅ Partial | ✅ Full |
-
-## Built-in Filter Operators
-
-The Data Filter Node supports these operators:
-
-- `equals`, `not_equals`
-- `greater_than`, `less_than`, `greater_than_or_equal`, `less_than_or_equal`
-- `contains`, `not_contains`, `starts_with`, `ends_with`
-- `in`, `not_in`
-- `is_null`, `is_not_null`
-- `regex_match`
-
-## Field Transformation Types
-
-The Field Mapper Node supports these transformations:
-
-- `direct` - Direct field copy
-- `rename` - Rename field
-- `cast` - Type casting (string, number, boolean, date, array, object)
-- `function` - Custom JavaScript function
-- `template` - Template-based transformation with `{{field}}` syntax
-- `lookup` - Lookup table transformation
-- `aggregate` - Aggregate multiple fields (sum, avg, count, concat, min, max)
-- `conditional` - Conditional transformation based on field values
-
-## API Reference
-
-### Core Interfaces
-
-- `INode<TInput, TOutput, TConfig>` - Base node interface
-- `NodeConfiguration` - Node configuration schema
-- `NodeExecutionContext` - Execution context with logging and services
-- `NodeExecutionResult<TOutput>` - Execution result with metadata
-
-### Base Classes
-
-- `BaseNode<TInput, TOutput, TConfig>` - Abstract base class for all nodes
-- `NodeRegistry` - Registry for managing node instances and factories
-
-### Validators
-
-- `CompatibilityValidator` - Validates node compatibility and suggests transformations
-- `ValidationUtils` - Utility functions for data validation
-
-### Utilities
-
-- `Logger` - Structured logging with Winston
-- `ValidationUtils` - Data validation utilities
-
-## Testing
-
-Run the test suite:
+### Environment Configuration
 
 ```bash
-npm test
+# Production environment variables
+NODE_ENV=production
+LOG_LEVEL=warn
+METRICS_ENABLED=true
+
+# Database
+DATABASE_URL=postgresql://user:pass@db:5432/prod
+DATABASE_POOL_SIZE=50
+
+# Message Queue
+RABBITMQ_URL=amqp://user:pass@mq:5672/prod
+RABBITMQ_PREFETCH=100
+
+# Security
+JWT_SECRET=your-super-secure-secret
+RATE_LIMIT_MAX=1000
 ```
 
-Run tests with coverage:
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+### Development Setup
 
 ```bash
-npm run test:coverage
-```
+# Clone the repository
+git clone https://github.com/yarangodev/flow-platform-node-core.git
+cd flow-platform-node-core
 
-## Building
-
-Build the library:
-
-```bash
-npm run build
-```
-
-## Development
-
-```bash
 # Install dependencies
 npm install
 
-# Run tests in watch mode
-npm run test:watch
+# Run tests
+npm test
 
-# Build and watch for changes
-npm run build:watch
+# Run tests with coverage
+npm run test:coverage
 
+# Build the project
+npm run build
+
+# Run development server
+npm run dev
+```
+
+### Code Quality
+
+```bash
 # Lint code
 npm run lint
+
+# Format code
+npm run format
+
+# Type check
+npm run type-check
+
+# Run all checks
+npm run ci
 ```
 
-## License
+## 📄 License
 
-MIT License - see LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Contributing
+## 🙏 Acknowledgments
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+- **NestJS** for the modular architecture inspiration
+- **TypeScript** for type safety and developer experience
+- **Jest** for comprehensive testing framework
+- **Winston** for structured logging capabilities
 
-## Architecture Overview
+## 📞 Support
 
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│ PostgreSQL Node │───▶│ Data Filter     │───▶│ Field Mapper    │
-│                 │    │ Node            │    │ Node            │
-│ Output: result  │    │ Input: data     │    │ Input: source   │
-│         count   │    │ Output: filtered│    │ Output: mapped  │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         ▼                       ▼                       ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    Compatibility Validator                      │
-│  • Schema validation     • Type checking     • Transformation   │
-│  • Connection validation • Performance hints • Error reporting  │
-└─────────────────────────────────────────────────────────────────┘
-```
+- **GitHub Issues**: [Report bugs or request features](https://github.com/yarangodev/flow-platform-node-core/issues)
+- **Documentation**: [Full API documentation](https://yarangodev.github.io/flow-platform-node-core)
+- **Discord**: [Join our community](https://discord.gg/flow-platform)
+- **Email**: support@flow-platform.dev
 
-The library is designed with extensibility and type safety as core principles, making it easy to create new node types while maintaining compatibility and performance.
+---
+
+<div align="center">
+
+**Built with ❤️ by the Flow Platform Team**
+
+[Website](https://flow-platform.dev) • [Documentation](https://docs.flow-platform.dev) • [Examples](https://github.com/yarangodev/flow-platform-examples)
+
+</div>
