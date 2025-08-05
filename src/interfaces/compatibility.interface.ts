@@ -16,3 +16,10 @@ export interface CompatibilityRule {
     function: string
   }>
 }
+export interface CompatibilityValidationResult {
+  level: CompatibilityLevel
+  valid: boolean
+  message?: string
+  warnings?: string[]
+  transformationRequired?: boolean
+}
