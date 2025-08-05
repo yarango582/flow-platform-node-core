@@ -2,6 +2,7 @@
 export * from './interfaces/node.interface'
 export * from './interfaces/execution-context.interface'
 export * from './interfaces/compatibility.interface'
+export * from './interfaces/validation.interface'
 
 export * from './base/base-node'
 export * from './base/node-registry'
